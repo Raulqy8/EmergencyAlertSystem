@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+</head>
+<body>
+  <h2>Admin Dashboard – Active Alerts</h2>
+
+  <p>Welcome, {{ current_user.name }} ({{ current_user.role }})</p>
+
+  {% if alerts %}
+  <table border="1" cellpadding="5">
+    <tr>
+      <th>ID</th>
+      <th>Type</th>
+      <th>Severity</th>
+      <th>Description</th>
+      <th>Status</th>
+      <th>Citizen</th>
+      <th>Responder</th>
+      <th>Actions</th>
+    </tr>
+    {% for alert in alerts %}
+    <tr>
+      <td>{{ alert.alert_id }}</td>
+      <td>{{ alert.type }}</td>
+      <td>{{ alert.severity }}</td>
+      <td>{{ alert.description }}</td>
+      <td>{{ alert.status }}</td>
+      <td>{{ alert.user.name }}</td>
+      <td>
+        {% if alert.status == 'reported' %}
+          <form method="POST" action="{{ url_for('admin.assign_responder', alert_id=alert.alert_id) }}">
+            <select name="responder_id">
+              {% for responder in responders %}
+                <option value="{{ responder.user_id }}">{{ responder.name }} ({{ responder.role }})</option>
+              {% endfor %}
+            </select>
+            <button type="submit">Assign</button>
+          </form>
+        {% elif alert.status == 'in_progress' %}
+          In Progress
+        {% else %}
+          {{ alert.status }}
+        {% endif %}
+      </td>
+      <td>
+        {% if alert.status != 'resolved' %}
+          <a href="{{ url_for('admin.resolve_alert', alert_id=alert.alert_id) }}">Mark as Resolved</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+    <p>No alerts to show.</p>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Responder Dashboard</title>
+</head>
+<body>
+  <h2>Responder Dashboard</h2>
+  <p>Welcome, {{ current_user.name }} ({{ current_user.role }})</p>
+
+  {% if alerts %}
+  <table border="1" cellpadding="5">
+    <tr>
+      <th>ID</th>
+      <th>Type</th>
+      <th>Severity</th>
+      <th>Description</th>
+      <th>Status</th>
+      <th>Citizen</th>
+      <th>Actions</th>
+    </tr>
+    {% for alert in alerts %}
+    <tr>
+      <td>{{ alert.alert_id }}</td>
+      <td>{{ alert.type }}</td>
+      <td>{{ alert.severity }}</td>
+      <td>{{ alert.description }}</td>
+      <td>{{ alert.status }}</td>
+      <td>{{ alert.user.name }}</td>
+      <td>
+        {% if alert.status == 'in_progress' %}
+          <a href="{{ url_for('responder.update_status', alert_id=alert.alert_id, new_status='on_route') }}">Mark On Route</a> |
+          <a href="{{ url_for('responder.update_status', alert_id=alert.alert_id, new_status='resolved') }}">Mark Resolved</a>
+        {% elif alert.status == 'on_route' %}
+          <a href="{{ url_for('responder.update_status', alert_id=alert.alert_id, new_status='resolved') }}">Mark Resolved</a>
+        {% else %}
+          {{ alert.status }}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+    <p>No active alerts assigned.</p>
+  {% endif %}
+</body>
+</html>
