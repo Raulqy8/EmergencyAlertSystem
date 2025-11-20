@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head><title>My Alerts</title></head>
-<body>
+<!-- ...existing code... -->
+{% extends 'base.html' %}
+{% block title %}My Alerts{% endblock %}
+{% block content %}
   <h2>My Reported Alerts</h2>
   {% if alerts %}
   <table border="1" cellpadding="5">
@@ -27,6 +27,6 @@
   {% else %}
     <p>No alerts submitted yet.</p>
   {% endif %}
-  <p><a href="/report">Report Another Emergency</a></p>
-</body>
-</html>
+  <p><a href="{{ url_for('alert.view_alerts') }}">My Alerts</a></p>
+{% endblock %}
+<!-- ...existing code... -->

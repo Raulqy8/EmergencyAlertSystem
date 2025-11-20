@@ -1,38 +1,82 @@
-<!DOCTYPE html>
-<html>
-<head><title>Report Emergency</title></head>
-<body>
-  <h2>Report an Emergency</h2>
-  <form method="POST">
-    <label>Type:</label><br>
-    <select name="type">
-      <option value="fire">Fire</option>
-      <option value="medical">Medical</option>
-      <option value="crime">Crime</option>
-      <option value="utility">Utility</option>
-      <option value="other">Other</option>
-    </select><br><br>
+<!-- templates/report_alert.html -->
+{% extends 'base.html' %}
+{% block title %}EMERGENCY!{% endblock %}
 
-    <label>Severity:</label><br>
-    <select name="severity">
-      <option value="low">Low</option>
-      <option value="medium">Medium</option>
-      <option value="high">High</option>
-      <option value="critical">Critical</option>
-    </select><br><br>
+{% block content %}
+<div style="text-align:center; padding:80px 20px; background:#000000; color:white; min-height:100vh;">
+  <h1 style="font-size:50px; margin-bottom:50px;">EMERGENCY ALERT SYSTEM</h1>
+  
+  <button id="panicButton" style="
+    background:#d32f2f; color:white; font-size:60px; padding:50px 100px;
+    border:none; border-radius:30px; cursor:pointer; box-shadow:0 20px 40px rgba(211,47,47,0.6);
+    animation: pulse 2s infinite;">
+    EMERGENCY ALERT
+  </button>
 
-    <label>Description:</label><br>
-    <textarea name="description" required></textarea><br><br>
+  <div id="status" style="margin-top:50px; font-size:30px;"></div>
+</div>
 
-    <label>Latitude (optional):</label><br>
-    <input type="text" name="latitude"><br><br>
+<script>
+document.getElementById('panicButton').addEventListener('click', function() {
+  const status = document.getElementById('status');
+  const btn = this;
+  btn.disabled = true;
+  status.innerHTML = "Getting your location...";
 
-    <label>Longitude (optional):</label><br>
-    <input type="text" name="longitude"><br><br>
+  if (!navigator.geolocation) {
+    status.innerHTML = "Geolocation not supported";
+    return;
+  }
 
-    <button type="submit">Submit Alert</button>
-  </form>
+  navigator.geolocation.getCurrentPosition(success, error, {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
+  });
 
-  <p><a href="/my-alerts">View My Alerts</a></p>
-</body>
-</html>
+  function success(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const accuracy = position.coords.accuracy
+
+    document.getElementById('status').innerHTML = 
+    `Location acquired!<br>Accuracy: ±${accuracy.toFixed(0)} meters<br>Sending alert...`;
+
+    fetch('/alert/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'emergency',
+        severity: 'critical',
+        description: 'Panic button pressed - immediate assistance required!',
+        latitude: lat,
+        longitude: lng
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        status.innerHTML = "<h2 style='color:#4CAF50;'>ALERT SENT!<br>Help is on the way!</h2>";
+      }
+    })
+    .catch(err => {
+      status.innerHTML = "Failed to send. Try again.";
+      btn.disabled = false;
+    });
+  }
+
+  function error() {
+    status.innerHTML = "Could not get location. Try again.";
+    btn.disabled = false;
+  }
+});
+</script>
+
+<style>
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+</style>
+{% endblock %}

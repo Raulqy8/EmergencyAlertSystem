@@ -4,4 +4,3 @@ Flask-Migrate
 Flask-SQLAlchemy
 PyMySQL
 python-dotenv
-WEEWEWEEEEe

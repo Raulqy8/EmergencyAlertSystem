@@ -1,7 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head><title>Register</title></head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+{% block content %}
   <h2>Register</h2>
   <form method="POST">
     <label>Name:</label><br>
@@ -20,6 +19,5 @@
     </select><br><br>
     <button type="submit">Register</button>
   </form>
-  <p>Already registered? <a href="/login">Login</a></p>
-</body>
-</html>
+  <p>Already registered? <a href="{{ url_for('auth.login') }}">Login</a></p>
+{% endblock %}

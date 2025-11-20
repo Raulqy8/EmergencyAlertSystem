@@ -1,11 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Responder Dashboard</title>
-</head>
-<body>
+<!-- ...existing code... -->
+{% extends 'base.html' %}
+{% block title %}Responder Dashboard{% endblock %}
+{% block content %}
   <h2>Responder Dashboard</h2>
   <p>Welcome, {{ current_user.name }} ({{ current_user.role }})</p>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  socket.on('new_alert', function(data) {
+    addMarkerToMap(data);  // we'll write this
+    // or add row to table
+  });
+  socket.on('status_update', function(data) {
+    updateMarkerOrRow(data);
+  });
+</script>
 
   {% if alerts %}
   <table border="1" cellpadding="5">
@@ -42,5 +52,5 @@
   {% else %}
     <p>No active alerts assigned.</p>
   {% endif %}
-</body>
-</html>
+{% endblock %}
+<!-- ...existing code... -->

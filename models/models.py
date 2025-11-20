@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return str(self.user_id)
 
-
+    
 class Alert(db.Model):
     __tablename__ = 'alerts'
     alert_id = db.Column(db.Integer, primary_key=True)

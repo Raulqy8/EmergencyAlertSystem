@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from models.models import db, Alert, User
+from utils import broadcast_new_alert
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -52,3 +53,28 @@ def resolve_alert(alert_id):
         flash(f"Alert #{alert.alert_id} marked as resolved.", "success")
 
     return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/admin/test_emit')
+@login_required
+def test_emit():
+    """Trigger a broadcast of the most recent alert (admin only).
+    Useful to test Socket.IO client updates without creating a new alert.
+    """
+    if current_user.role != 'admin':
+        flash("Access denied!", "danger")
+        return redirect(url_for('admin.admin_dashboard'))
+
+    alert = Alert.query.order_by(Alert.timestamp.desc()).first()
+    if not alert:
+        flash("No alerts available to emit.", "warning")
+        return redirect(url_for('admin.admin_dashboard'))
+
+    try:
+        broadcast_new_alert(alert)
+        flash(f"Emitted alert #{alert.alert_id} to connected clients.", "success")
+    except Exception as e:
+        flash(f"Emit failed: {e}", "danger")
+
+    return redirect(url_for('admin.admin_dashboard'))
+
