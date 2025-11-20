@@ -115,18 +115,7 @@ function initMap() {
 
 <!-- REPLACE YOUR-API-KEY-HERE WITH YOUR REAL KEY -->
 <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_ZOKnTCpHrZx2LhS2JKeMoDWEWZaRcmE&callback=initMap">
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_KEY }}&callback=initMap">
 </script>
 
-<script>
-// Safety check
-if (window.location.href.includes('AIzaSyC_ZOKnTCpHrZx2LhS2JKeMoDWEWZaRcmE')) {
-  document.body.innerHTML = `<h1 style="color:red; text-align:center; margin-top:100px;">
-    Replace AIzaSyC_ZOKnTCpHrZx2LhS2JKeMoDWEWZaRcmE with your real Google Maps API key!<br><br>
-    <a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank">
-      Click here to get one (free)
-    </a>
-  </h1>`;
-}
-</script>
 {% endblock %}

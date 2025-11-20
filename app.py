@@ -3,6 +3,10 @@
 # === 1. MONKEY PATCH FIRST — BEFORE ANYTHING ELSE! ===
 import eventlet
 eventlet.monkey_patch()          # ← THIS MUST BE THE VERY FIRST LINES
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # === 2. NOW import everything else ===
 from flask import Flask, render_template, redirect, url_for, request, jsonify
@@ -42,6 +46,10 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(alert_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(responder_bp)
+
+@app.context_processor
+def inject_google_maps_key():
+    return dict(GOOGLE_MAPS_KEY=app.config['GOOGLE_MAPS_KEY'])
 
 # === 7. Routes ===
 @app.route('/')
@@ -105,6 +113,8 @@ if __name__ == '__main__':
     print("EMERGENCY SYSTEM LIVE")
     print("Panic Button → http://127.0.0.1:5000/alert/report")
     print("Admin Map     → http://127.0.0.1:5000/admin/dashboard")
+
+    app.config['GOOGLE_MAPS_KEY'] = os.environ.get("GOOGLE_MAPS_KEY")
 
     socketio.run(
         app,
