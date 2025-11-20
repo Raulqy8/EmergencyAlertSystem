@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}EMERGENCY!{% endblock %}
+
+{% block content %}
+<div style="text-align:center; padding:80px 20px; background:#000000; color:white; min-height:100vh;">
+  <h1 style="font-size:50px; margin-bottom:50px;">EMERGENCY ALERT SYSTEM</h1>
+  
+  <button id="panicButton" style="
+    background:#d32f2f; color:white; font-size:60px; padding:50px 100px;
+    border:none; border-radius:30px; cursor:pointer; box-shadow:0 20px 40px rgba(211,47,47,0.6);
+    animation: pulse 2s infinite;">
+    EMERGENCY ALERT
+  </button>
+
+  <div id="status" style="margin-top:50px; font-size:30px;"></div>
+</div>
+
+<script>
+document.getElementById('panicButton').addEventListener('click', function() {
+  const status = document.getElementById('status');
+  const btn = this;
+  btn.disabled = true;
+  status.innerHTML = "Getting your location...";
+
+  if (!navigator.geolocation) {
+    status.innerHTML = "Geolocation not supported";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(success, error, {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
+  });
+
+  function success(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const accuracy = position.coords.accuracy
+
+    document.getElementById('status').innerHTML = 
+    `Location acquired!<br>Accuracy: ±${accuracy.toFixed(0)} meters<br>Sending alert...`;
+
+    fetch('/alert/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'emergency',
+        severity: 'critical',
+        description: 'Panic button pressed - immediate assistance required!',
+        latitude: lat,
+        longitude: lng
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        status.innerHTML = "<h2 style='color:#4CAF50;'>ALERT SENT!<br>Help is on the way!</h2>";
+      }
+    })
+    .catch(err => {
+      status.innerHTML = "Failed to send. Try again.";
+      btn.disabled = false;
+    });
+  }
+
+  function error() {
+    status.innerHTML = "Could not get location. Try again.";
+    btn.disabled = false;
+  }
+});
+</script>
+
+<style>
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+</style>
+{% endblock %}

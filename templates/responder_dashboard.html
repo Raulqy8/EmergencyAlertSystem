@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Responder Tactical Map{% endblock %}
+
+{% block content %}
+<h2 style="text-align:center; background:#1e88e5; color:white; padding:15px; margin:0;">
+  RESPONDER COMMAND MAP - {{ current_user.name }} ({{ current_user.role.upper() }})
+</h2>
+
+<div id="map" style="width:100%; height:90vh;"></div>
+<div style="position:fixed; top:100px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; border-radius:10px; z-index:1000;">
+  Active missions: <span id="count">0</span>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  const current_user_id = {{ current_user.user_id | tojson }};
+  let map;
+  let markers = {};
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 7,
+      center: { lat: 45.9432, lng: 24.9668 },
+      mapTypeId: 'roadmap'
+    });
+    loadMyAlerts();
+  }
+
+  function loadMyAlerts() {
+    fetch('/responder/api/my_alerts')
+      .then(r => r.json())
+      .then(alerts => {
+        alerts.forEach(addMarker);
+        document.getElementById('count').textContent = alerts.length;
+      });
+  }
+
+  function getIcon(status) {
+    if (status === 'resolved') return 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
+    if (status === 'on_site') return 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png';
+    if (status === 'on_route') return 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+    if (status === 'assigned') return 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png';
+    return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
+  }
+
+  function addMarker(alert) {
+    if (!alert.latitude || !alert.longitude) return;
+    if (markers[alert.alert_id]) markers[alert.alert_id].marker.setMap(null);
+
+    const marker = new google.maps.Marker({
+      position: { lat: alert.latitude, lng: alert.longitude },
+      map: map,
+      icon: getIcon(alert.status),
+      animation: alert.status === 'assigned' ? google.maps.Animation.BOUNCE : null,
+      optimized: false
+    });
+
+    const actions = alert.status === 'assigned' ? 
+      `<form method="POST" action="/responder/set_status/${alert.alert_id}/on_route">
+         <button type="submit" style="background:#1e88e5;color:white;padding:8px;width:100%;border:none;">ACCEPT MISSION - ON ROUTE</button>
+       </form>` :
+      alert.status === 'on_route' ?
+      `<form method="POST" action="/responder/set_status/${alert.alert_id}/on_site">
+         <button type="submit" style="background:#7b1fa2;color:white;padding:8px;width:100%;border:none;">ARRIVED - SOLVING</button>
+       </form>` :
+      alert.status === 'on_site' ?
+      `<form method="POST" action="/responder/set_status/${alert.alert_id}/resolved">
+         <button type="submit" style="background:#43a047;color:white;padding:8px;width:100%;border:none;">MISSION COMPLETED</button>
+       </form>` :
+      '<p style="color:green;font-weight:bold;">Completed</p>';
+
+    const infoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="min-width:250px;">
+          <h3>Mission #${alert.alert_id}</h3>
+          <p><strong>Type:</strong> ${alert.type.toUpperCase()}</p>
+          <p><strong>Severity:</strong> ${alert.severity.toUpperCase()}</p>
+          <p><strong>Description:</strong> ${alert.description}</p>
+          <p><strong>Status:</strong> ${alert.status.replace('_', ' ')}</p>
+          ${actions}
+        </div>
+      `
+    });
+
+    marker.addListener('click', () => infoWindow.open(map, marker));
+    markers[alert.alert_id] = { marker, infoWindow };
+
+    if (alert.status === 'assigned') {
+      map.setCenter({ lat: alert.latitude, lng: alert.longitude });
+      map.setZoom(15);
+      //new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3').play();
+    }
+
+  }
+
+  socket.on('new_alert', alert => {
+    if (alert.assigned_to == current_user_id) {
+      addMarker(alert);
+      document.getElementById('count').textContent = Object.keys(markers).length;
+    }
+  });
+
+  socket.on('status_update', (data) => {
+    console.log('Responder received status update:', data);
+
+    if (!markers[data.alert_id]) return;
+
+    const newIcon = getIcon(data.status);
+    markers[data.alert_id].marker.setIcon(newIcon);
+
+    if (data.status === 'resolved') {
+      markers[data.alert_id].marker.setMap(null);
+      delete markers[data.alert_id];
+      document.getElementById('count').textContent = Object.keys(markers).length;
+      console.log('Mission completed → marker removed from responder map');
+    }
+  });
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&callback=initMap">
+</script>
+
+{% endblock %}

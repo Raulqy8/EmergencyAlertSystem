@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}My Alerts{% endblock %}
+{% block content %}
+  <h2>My Reported Alerts</h2>
+  {% if alerts %}
+  <table border="1" cellpadding="5">
+    <tr>
+      <th>ID</th>
+      <th>Type</th>
+      <th>Severity</th>
+      <th>Status</th>
+      <th>Description</th>
+      <th>Reported At</th>
+    </tr>
+    {% for alert in alerts %}
+    <tr>
+      <td>{{ alert.alert_id }}</td>
+      <td>{{ alert.type }}</td>
+      <td>{{ alert.severity }}</td>
+      <td>{{ alert.status }}</td>
+      <td>{{ alert.description }}</td>
+      <td>{{ alert.timestamp }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+    <p>No alerts submitted yet.</p>
+  {% endif %}
+  <p><a href="{{ url_for('alert.view_alerts') }}">My Alerts</a></p>
+{% endblock %}
